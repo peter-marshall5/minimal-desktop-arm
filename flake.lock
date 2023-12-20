@@ -1,0 +1,47 @@
+{
+  "nodes": {
+    "nixos-appliance": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1703036756,
+        "narHash": "sha256-6rx+3e2GzaUmDFBWBRQ6dEIJRuUg6IQx2mhejBe4WQQ=",
+        "owner": "peter-marshall5",
+        "repo": "nixos-appliance",
+        "rev": "4a7b4f2ecf70d800f5477fc2293b5637d9c37603",
+        "type": "github"
+      },
+      "original": {
+        "owner": "peter-marshall5",
+        "repo": "nixos-appliance",
+        "type": "github"
+      }
+    },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1702780907,
+        "narHash": "sha256-blbrBBXjjZt6OKTcYX1jpe9SRof2P9ZYWPzq22tzXAA=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "1e2e384c5b7c50dbf8e9c441a9e58d85f408b01f",
+        "type": "github"
+      },
+      "original": {
+        "id": "nixpkgs",
+        "ref": "nixos-23.11",
+        "type": "indirect"
+      }
+    },
+    "root": {
+      "inputs": {
+        "nixos-appliance": "nixos-appliance",
+        "nixpkgs": "nixpkgs"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}
