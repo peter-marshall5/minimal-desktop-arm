@@ -1,0 +1,237 @@
+From 28416ebb63a0fba56074d038d0ef7c41efcc4c78 Mon Sep 17 00:00:00 2001
+From: Urja Rannikko <urjaman@gmail.com>
+Date: Tue, 28 Sep 2021 20:23:13 +0300
+Subject: [PATCH] Revert "clk: divider: Implement and wire up .determine_rate
+ by default"
+
+This reverts commit 69a00fb3d6970681c15a23595ec54233ce10295c.
+That broke eMMC detection (error -110) on veyron speedy.
+Why is still an open question but for now i'm doing this revert
+in my tree to be able to test the rest of 5.15 rc's.
+---
+ drivers/clk/clk-divider.c | 23 -----------------------
+ 1 file changed, 23 deletions(-)
+
+diff --git a/drivers/clk/clk-divider.c b/drivers/clk/clk-divider.c
+index f6b2bf558486..87ba4966b0e8 100644
+--- a/drivers/clk/clk-divider.c
++++ b/drivers/clk/clk-divider.c
+@@ -446,27 +446,6 @@ static long clk_divider_round_rate(struct clk_hw *hw, unsigned long rate,
+ 				  divider->width, divider->flags);
+ }
+ 
+-static int clk_divider_determine_rate(struct clk_hw *hw,
+-				      struct clk_rate_request *req)
+-{
+-	struct clk_divider *divider = to_clk_divider(hw);
+-
+-	/* if read only, just return current value */
+-	if (divider->flags & CLK_DIVIDER_READ_ONLY) {
+-		u32 val;
+-
+-		val = clk_div_readl(divider) >> divider->shift;
+-		val &= clk_div_mask(divider->width);
+-
+-		return divider_ro_determine_rate(hw, req, divider->table,
+-						 divider->width,
+-						 divider->flags, val);
+-	}
+-
+-	return divider_determine_rate(hw, req, divider->table, divider->width,
+-				      divider->flags);
+-}
+-
+ int divider_get_val(unsigned long rate, unsigned long parent_rate,
+ 		    const struct clk_div_table *table, u8 width,
+ 		    unsigned long flags)
+@@ -522,7 +501,6 @@ static int clk_divider_set_rate(struct clk_hw *hw, unsigned long rate,
+ const struct clk_ops clk_divider_ops = {
+ 	.recalc_rate = clk_divider_recalc_rate,
+ 	.round_rate = clk_divider_round_rate,
+-	.determine_rate = clk_divider_determine_rate,
+ 	.set_rate = clk_divider_set_rate,
+ };
+ EXPORT_SYMBOL_GPL(clk_divider_ops);
+@@ -530,7 +508,6 @@ EXPORT_SYMBOL_GPL(clk_divider_ops);
+ const struct clk_ops clk_divider_ro_ops = {
+ 	.recalc_rate = clk_divider_recalc_rate,
+ 	.round_rate = clk_divider_round_rate,
+-	.determine_rate = clk_divider_determine_rate,
+ };
+ EXPORT_SYMBOL_GPL(clk_divider_ro_ops);
+ 
+From 5a9a3b3418ab920a30ef09fdd8836ca90ab99e1e Mon Sep 17 00:00:00 2001
+From: "Miouyouyou (Myy)" <myy@miouyouyou.fr>
+Date: Tue, 9 Oct 2018 22:01:07 +0200
+Subject: [PATCH] block: partitions: efi: Ignore bizarre Chromebook GPT
+ partitions
+
+This patch is based on @SolidHal work here :
+https://raw.githubusercontent.com/SolidHal/PrawnOS/master/resources/BuildResources/patches-tested/kernel/0001-block-partitions-efi-Add-support-for-IGNOREME-GPT-si.patch
+
+Here's the initial commit message :
+
+8<---
+
+This patch adds support for a special GPT header signature marker (using
+the string 'IGNOREME' instead of the spec's 'EFI PART'). This tells the
+kernel to ignore this GPT completely and look at the other one instead.
+Since the kernel always prefers the primary GPT anyway, all we really
+need to do effectively is to check whether the primary GPT is marked
+'IGNOREME' and force evaluation of the secondary one in that case.
+
+Borrowed from the chrome os 3.14 kernel, the commit can be found here:
+https://chromium.googlesource.com/chromiumos/third_party/kernel/+/abba28d0a1b7361da6e2023352e92687166ca30d
+
+Also bundled in this commit
+https://chromium.googlesource.com/chromiumos/third_party/kernel/+/bd0c62c7de0c8a63314b7955e5718d8f6192f9d2%5E%21/#F0
+Which is a small compiler warning fix for the above patch
+
+This patch fixes how the kernel detects and handles certain mmc
+manufatures devices, and allows the partitions on the mmc to be bootable
+and mountable.
+
+>8---
+
+Signed-off-by: Miouyouyou (Myy) <myy@miouyouyou.fr>
+---
+ block/partitions/efi.c | 33 +++++++++++++++++++++++----------
+ block/partitions/efi.h |  3 ++-
+ 2 files changed, 25 insertions(+), 11 deletions(-)
+
+diff --git a/block/partitions/efi.c b/block/partitions/efi.c
+index 7ca5c4c374d4..54531e49c6ab 100644
+--- a/block/partitions/efi.c
++++ b/block/partitions/efi.c
+@@ -328,23 +328,34 @@ static gpt_header *alloc_read_gpt_header(struct parsed_partitions *state,
+  * @lba: logical block address of the GPT header to test
+  * @gpt: GPT header ptr, filled on return.
+  * @ptes: PTEs ptr, filled on return.
++ * @ignored is filled on return with 1 if this is an IGNOREME GPT,
++ *     0 otherwise. May be NULL.
+  *
+  * Description: returns 1 if valid,  0 on error.
+  * If valid, returns pointers to newly allocated GPT header and PTEs.
+  */
+ static int is_gpt_valid(struct parsed_partitions *state, u64 lba,
+-			gpt_header **gpt, gpt_entry **ptes)
++			gpt_header **gpt, gpt_entry **ptes, int *ignored)
+ {
+ 	u32 crc, origcrc;
+ 	u64 lastlba, pt_size;
+ 
++	if (ignored)
++		*ignored = 0;
+ 	if (!ptes)
+ 		return 0;
+ 	if (!(*gpt = alloc_read_gpt_header(state, lba)))
+ 		return 0;
+ 
+ 	/* Check the GUID Partition Table signature */
+-	if (le64_to_cpu((*gpt)->signature) != GPT_HEADER_SIGNATURE) {
++
++	if (le64_to_cpu((*gpt)->signature) == GPT_HEADER_SIGNATURE_IGNORED) {
++		pr_debug("GUID Partition Table at LBA %llu marked IGNOREME\n",
++						(unsigned long long)lba);
++		if (ignored)
++			*ignored = 1;
++		goto fail;
++	} else if (le64_to_cpu((*gpt)->signature) != GPT_HEADER_SIGNATURE) {
+ 		pr_debug("GUID Partition Table Header signature is wrong:"
+ 			 "%lld != %lld\n",
+ 			 (unsigned long long)le64_to_cpu((*gpt)->signature),
+@@ -581,7 +592,7 @@ compare_gpts(gpt_header *pgpt, gpt_header *agpt, u64 lastlba)
+ static int find_valid_gpt(struct parsed_partitions *state, gpt_header **gpt,
+ 			  gpt_entry **ptes)
+ {
+-	int good_pgpt = 0, good_agpt = 0, good_pmbr = 0;
++	int good_pgpt = 0, good_agpt = 0, good_pmbr = 0, pgpt_ignored = 0;
+ 	gpt_header *pgpt = NULL, *agpt = NULL;
+ 	gpt_entry *pptes = NULL, *aptes = NULL;
+ 	legacy_mbr *legacymbr;
+@@ -613,13 +624,13 @@ static int find_valid_gpt(struct parsed_partitions *state, gpt_header **gpt,
+ 	}
+ 
+ 	good_pgpt = is_gpt_valid(state, GPT_PRIMARY_PARTITION_TABLE_LBA,
+-				 &pgpt, &pptes);
++			 &pgpt, &pptes, &pgpt_ignored);
+         if (good_pgpt)
+ 		good_agpt = is_gpt_valid(state,
+ 					 le64_to_cpu(pgpt->alternate_lba),
+-					 &agpt, &aptes);
+-        if (!good_agpt && force_gpt)
+-                good_agpt = is_gpt_valid(state, lastlba, &agpt, &aptes);
++					 &agpt, &aptes, NULL);
++	if (!good_agpt && (force_gpt || pgpt_ignored))
++		good_agpt = is_gpt_valid(state, lastlba, &agpt, &aptes, NULL);
+ 
+ 	if (!good_agpt && force_gpt && fops->alternative_gpt_sector) {
+ 		sector_t agpt_sector;
+@@ -628,14 +639,15 @@ static int find_valid_gpt(struct parsed_partitions *state, gpt_header **gpt,
+ 		err = fops->alternative_gpt_sector(disk, &agpt_sector);
+ 		if (!err)
+ 			good_agpt = is_gpt_valid(state, agpt_sector,
+-						 &agpt, &aptes);
++						 &agpt, &aptes, NULL);
+ 	}
+ 
+         /* The obviously unsuccessful case */
+         if (!good_pgpt && !good_agpt)
+                 goto fail;
+ 
+-        compare_gpts(pgpt, agpt, lastlba);
++	if (!pgpt_ignored)
++		compare_gpts(pgpt, agpt, lastlba);
+ 
+         /* The good cases */
+         if (good_pgpt) {
+@@ -652,7 +664,8 @@ static int find_valid_gpt(struct parsed_partitions *state, gpt_header **gpt,
+                 *ptes = aptes;
+                 kfree(pgpt);
+                 kfree(pptes);
+-		pr_warn("Primary GPT is invalid, using alternate GPT.\n");
++	pr_warn("Primary GPT is %s, using alternate GPT.\n",
++		pgpt_ignored ? "being ignored" : "invalid");
+                 return 1;
+         }
+ 
+diff --git a/block/partitions/efi.h b/block/partitions/efi.h
+index 8cc2b88d0aa8..fcf65ebbaa85 100644
+--- a/block/partitions/efi.h
++++ b/block/partitions/efi.h
+@@ -27,7 +27,8 @@
+ #define GPT_MBR_PROTECTIVE  1
+ #define GPT_MBR_HYBRID      2
+ 
+-#define GPT_HEADER_SIGNATURE 0x5452415020494645ULL
++#define GPT_HEADER_SIGNATURE		0x5452415020494645ULL	/* 'EFI PART' */
++#define GPT_HEADER_SIGNATURE_IGNORED	0x454d45524f4e4749ULL	/* 'IGNOREME' */
+ #define GPT_HEADER_REVISION_V1 0x00010000
+ #define GPT_PRIMARY_PARTITION_TABLE_LBA 1
+ 
+diff --git a/arch/arm/boot/dts/rockchip/rk3288.dtsi b/arch/arm/boot/dts/rockchip/rk3288.dtsi
+index 44fc570..487b0e0 100644
+--- a/arch/arm/boot/dts/rockchip/rk3288.dtsi
++++ b/arch/arm/boot/dts/rockchip/rk3288.dtsi
+@@ -378,8 +378,6 @@
+ 		reg-io-width = <4>;
+ 		clocks = <&cru SCLK_UART0>, <&cru PCLK_UART0>;
+ 		clock-names = "baudclk", "apb_pclk";
+-		dmas = <&dmac_peri 1>, <&dmac_peri 2>;
+-		dma-names = "tx", "rx";
+ 		pinctrl-names = "default";
+ 		pinctrl-0 = <&uart0_xfer>;
+ 		status = "disabled";
+diff --git a/sound/soc/codecs/max98090.c b/sound/soc/codecs/max98090.c
+index 06ed2a9..23adaff 100644
+--- a/sound/soc/codecs/max98090.c
++++ b/sound/soc/codecs/max98090.c
+@@ -92,7 +92,7 @@ static const struct reg_default max98090_reg[] = {
+ 	{ 0x3F, 0x00 }, /* 3F Output Enable */
+ 
+ 	{ 0x40, 0x00 }, /* 40 Level Control */
+-	{ 0x41, 0x00 }, /* 41 DSP Filter Enable */
++	{ 0x41, 0x01 }, /* 41 DSP Filter Enable */
+ 	{ 0x42, 0x00 }, /* 42 Bias Control */
+ 	{ 0x43, 0x00 }, /* 43 DAC Control */
+ 	{ 0x44, 0x06 }, /* 44 ADC Control */

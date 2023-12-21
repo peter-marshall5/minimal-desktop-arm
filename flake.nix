@@ -17,6 +17,11 @@
       nixpkgs.buildPlatform.system = "x86_64-linux";
     };
 
+    nixosModules.veyron = {config, ...}: {
+      boot.initrd.includeDefaultModules = true;
+      boot.initrd.kernelModules = [ ];
+    };
+
     images.speedy = nixos-appliance.nixosGenerate {
       system = "armv7l-linux";
       modules = [
