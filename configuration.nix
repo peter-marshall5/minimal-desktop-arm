@@ -12,7 +12,6 @@
 
   imports = [
     (modulesPath + "/profiles/image-based-appliance.nix")
-    (modulesPath + "/profiles/headless.nix")
   ];
 
   networking.hostName = "nixos"; # Define your hostname.
