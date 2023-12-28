@@ -7,11 +7,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1703741820,
-        "narHash": "sha256-dFnXYO6nIh64IYaee2P8usVogJ2ZcQrpBa6zn7fo9QQ=",
+        "lastModified": 1703792726,
+        "narHash": "sha256-YQi7HzcvJh6nBnYl+98K5aLeDqtP4ZQs1IamB/H1mCg=",
         "owner": "peter-marshall5",
         "repo": "nixos-appliance",
-        "rev": "35cb937325a3898c300d98abb79146e1ed427d1b",
+        "rev": "6d7fff57cf96fa494ace0ef263fd2be0bfef6d78",
         "type": "github"
       },
       "original": {
@@ -22,11 +22,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1703013332,
-        "narHash": "sha256-+tFNwMvlXLbJZXiMHqYq77z/RfmpfpiI3yjL6o/Zo9M=",
+        "lastModified": 1703438236,
+        "narHash": "sha256-aqVBq1u09yFhL7bj1/xyUeJjzr92fXVvQSSEx6AdB1M=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "54aac082a4d9bb5bbc5c4e899603abfb76a3f6d6",
+        "rev": "5f64a12a728902226210bf01d25ec6cbb9d9265b",
         "type": "github"
       },
       "original": {

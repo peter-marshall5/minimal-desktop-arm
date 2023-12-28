@@ -26,6 +26,10 @@
         enable = true;
         kernelPart = "${u-boot.bin.speedy-kpart}";
       };
+      hardware.deviceTree = {
+        enable = true;
+        name = "rk3288-veyron-speedy.dtb";
+      };
     };
 
     images.speedy = nixos-appliance.nixosGenerate {
