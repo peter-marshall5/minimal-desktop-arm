@@ -7,9 +7,10 @@
       url = "github:peter-marshall5/nixos-appliance";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    u-boot.url = "github:peter-marshall5/u-boot-veyron-speedy";
   };
 
-  outputs = { self, nixpkgs, nixos-appliance, ... }: {
+  outputs = { self, nixpkgs, nixos-appliance, u-boot, ... }: {
 
     nixosModules.cross-armv7 = {config, ...}: {
       nixpkgs.config.allowUnsupportedSystem = true;
@@ -21,6 +22,10 @@
       boot.initrd.includeDefaultModules = false;
       boot.initrd.kernelModules = [ ];
       boot.kernelParams = [ "console=ttyS0,115200" "console=tty0" ];
+      boot.loader.depthcharge = {
+        enable = true;
+        kernelPart = "${u-boot.bin.speedy-kpart}";
+      };
     };
 
     images.speedy = nixos-appliance.nixosGenerate {

@@ -7,11 +7,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1703274913,
-        "narHash": "sha256-/O9vm/+FLnYpKiMMdkkI6xS1BGU4xZTIZ3OuUlFM/Ug=",
+        "lastModified": 1703741820,
+        "narHash": "sha256-dFnXYO6nIh64IYaee2P8usVogJ2ZcQrpBa6zn7fo9QQ=",
         "owner": "peter-marshall5",
         "repo": "nixos-appliance",
-        "rev": "89bd049adf769150e0610df0d760e74339a60496",
+        "rev": "35cb937325a3898c300d98abb79146e1ed427d1b",
         "type": "github"
       },
       "original": {
@@ -35,10 +35,45 @@
         "type": "indirect"
       }
     },
+    "nixpkgs_2": {
+      "locked": {
+        "lastModified": 1703499205,
+        "narHash": "sha256-lF9rK5mSUfIZJgZxC3ge40tp1gmyyOXZ+lRY3P8bfbg=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "e1fa12d4f6c6fe19ccb59cac54b5b3f25e160870",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixpkgs-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "nixos-appliance": "nixos-appliance",
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs",
+        "u-boot": "u-boot"
+      }
+    },
+    "u-boot": {
+      "inputs": {
+        "nixpkgs": "nixpkgs_2"
+      },
+      "locked": {
+        "lastModified": 1703715446,
+        "narHash": "sha256-rucKufRB+bbbuJ0roh+LpbzsMBBeRANcUjohan7Z33A=",
+        "owner": "peter-marshall5",
+        "repo": "u-boot-veyron-speedy",
+        "rev": "29a6e3d43d2b938564d268735745e842035cfe92",
+        "type": "github"
+      },
+      "original": {
+        "owner": "peter-marshall5",
+        "repo": "u-boot-veyron-speedy",
+        "type": "github"
       }
     }
   },
