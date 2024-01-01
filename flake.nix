@@ -18,7 +18,9 @@
       nixpkgs.buildPlatform.system = "x86_64-linux";
     };
 
-    nixosModules.veyron = {config, pkgs, ...}: {
+    nixosModules.kernel = import ./kernel.nix;
+    
+    nixosModules.bootConfig  = {config, pkgs, ...}: {
       boot.initrd.includeDefaultModules = false;
       boot.initrd.kernelModules = [ ];
       boot.kernelParams = [ "console=ttyS0,115200" "console=tty0" ];
@@ -32,13 +34,19 @@
       };
     };
 
+    nixosModules.bootableImage = {config, pkgs, ...}: {
+      imports = [
+        self.nixosModules.kernel
+        self.nixosModules.bootConfig
+      ];
+    };
+
     images.speedy = nixos-appliance.nixosGenerate {
       system = "armv7l-linux";
       modules = [
         ./configuration.nix
         ./kernel.nix
-        self.nixosModules.cross-armv7
-        self.nixosModules.veyron
+        self.nixosModules.bootableImage
       ];
     };
 
