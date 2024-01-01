@@ -14,7 +14,7 @@
       nixpkgs.buildPlatform.system = "x86_64-linux";
     };
 
-    nixosModules.veyron-speedy = import ./veyron-speedy.nix;
+    nixosModules.veyron-speedy = import ./veyron-speedy.nix u-boot;
 
   };
 }
