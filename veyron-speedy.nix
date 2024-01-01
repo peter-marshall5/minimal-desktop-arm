@@ -1,4 +1,5 @@
-{ config, pkgs, u-boot, ... }:
+u-boot:
+{ config, pkgs, ... }:
 {
   boot.kernelPackages = pkgs.linuxPackagesFor (let
     baseKernel = pkgs.linux_latest;
