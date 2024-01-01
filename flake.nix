@@ -1,5 +1,5 @@
 {
-  description = "Build NixOS images for veyron-speedy";
+  description = "Support package for veyron-speedy hardware";
 
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-unstable";
@@ -18,35 +18,14 @@
       nixpkgs.buildPlatform.system = "x86_64-linux";
     };
 
-    nixosModules.kernel = import ./kernel.nix;
-    
-    nixosModules.bootConfig  = {config, pkgs, ...}: {
-      boot.initrd.includeDefaultModules = false;
-      boot.initrd.kernelModules = [ ];
-      boot.kernelParams = [ "console=ttyS0,115200" "console=tty0" ];
-      boot.loader.depthcharge = {
-        enable = true;
-        kernelPart = "${u-boot.bin.speedy-kpart}";
-      };
-      hardware.deviceTree = {
-        enable = true;
-        name = "rk3288-veyron-speedy.dtb";
-      };
-    };
-
-    nixosModules.bootableImage = {config, pkgs, ...}: {
-      imports = [
-        self.nixosModules.kernel
-        self.nixosModules.bootConfig
-      ];
-    };
+    nixosModules.veyron-speedy = import ./veyron-speedy.nix;
 
     images.speedy = nixos-appliance.nixosGenerate {
       system = "armv7l-linux";
       modules = [
         ./configuration.nix
-        ./kernel.nix
-        self.nixosModules.bootableImage
+        self.nixosModules.cross-armv7
+        self.nixosModules.veyron-speedy
       ];
     };
 

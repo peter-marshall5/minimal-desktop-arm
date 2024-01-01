@@ -26,12 +26,11 @@
     keyMap = "us";
   };
 
-  users.mutableUsers = false;
+  users.mutableUsers = true;
   users.users.admin = {
     isNormalUser = true;
     extraGroups = [ "wheel" ];
-    hashedPassword = "$6$2T8iP2f.q2RDkVb1$es8g03xxtfsw/5WF3lXTLsnEYPJIYidBMRVCOfYohvjZ.Jda73wHzTksVn1iX3LWJp4ZjUp5d.rst/FCgL/0V0";
-    openssh.authorizedKeys.keys = ["ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILAtjD6VShP3fXpM6Slv458S4Uuhvd/14gnK7oWoRSjK petms@peter-chromebook"];
+    password = "admin";
   };
 
   # List packages installed in system profile. To search, run:
